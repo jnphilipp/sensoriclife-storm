@@ -1,4 +1,4 @@
-package org.storm.util;
+package org.sensoriclife.util;
 
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;

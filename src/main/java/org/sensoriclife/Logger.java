@@ -1,11 +1,12 @@
-package org.storm;
+package org.sensoriclife;
 
+import org.sensoriclife.storm.App;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Properties;
 import org.apache.log4j.PropertyConfigurator;
 import org.slf4j.LoggerFactory;
-import org.storm.util.Helpers;
+import org.sensoriclife.util.Helpers;
 
 /**
  *
