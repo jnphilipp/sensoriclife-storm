@@ -10,7 +10,6 @@ import java.util.Map;
 import org.apache.accumulo.core.client.MutationsRejectedException;
 import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.data.Value;
-import org.apache.hadoop.io.Text;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.sensoriclife.Logger;
@@ -41,10 +40,6 @@ public class WorldBolt extends BaseRichBolt {
 			String otherAddresses = input.getStringByField("other_addresses");
 
 			try {
-				Text rowID = new Text(Helpers.getSHA512(name + "#" + billingAddress));
-				Text colFam = new Text("user");
-				Text colQual = new Text(name);
-
 				JSONObject user = new JSONObject();
 				JSONArray ja = new JSONArray();
 				for ( String s : otherAddresses.split(";") )
@@ -54,7 +49,7 @@ public class WorldBolt extends BaseRichBolt {
 				user.put("otherAddresses", ja);
 
 				Value value = new Value(user.toJSONString().getBytes());
-				Accumulo.getInstance().write("users", rowID, colFam, colQual, value);
+				Accumulo.getInstance().write("users", Helpers.getSHA512(name + "#" + billingAddress), "user", null, value);
 			}
 			catch ( NoSuchAlgorithmException e ) {
 				Logger.error(WorldBolt.class, e.toString());
@@ -68,15 +63,11 @@ public class WorldBolt extends BaseRichBolt {
 			String address = input.getStringByField("address");
 
 			try {
-				Text rowID = new Text(address);
-				Text colFam = new Text("residentialUnit");
-				Text colQual = new Text("qual" + address);
-
 				JSONObject unit = new JSONObject();
 				unit.put("electricity_id", electricityId);
 
 				Value value = new Value(unit.toJSONString().getBytes());
-				Accumulo.getInstance().write("residentialUnit", rowID, colFam, colQual, value);
+				Accumulo.getInstance().write("residentialUnit", address, "residentialUnit", null, value);
 			}
 			catch ( TableNotFoundException | MutationsRejectedException e ) {
 				Logger.error(WorldBolt.class, "Error while writing to accumulo.", e.toString());

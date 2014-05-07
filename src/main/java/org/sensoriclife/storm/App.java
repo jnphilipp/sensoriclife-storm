@@ -69,8 +69,13 @@ public class App {
 			}
 		}
 		else {
-			Accumulo.getInstance();
-			Accumulo.getInstance().connect();
+			try {
+				Accumulo.getInstance();
+				Accumulo.getInstance().connect();
+			}
+			catch ( AccumuloException | AccumuloSecurityException e ) {
+				Logger.error("Error while creating mock instance.", e.toString());
+			}
 
 			LocalCluster cluster = new LocalCluster();
 			cluster.submitTopology("test", conf, builder.createTopology());
