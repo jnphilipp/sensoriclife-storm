@@ -10,7 +10,10 @@ import backtype.storm.utils.Utils;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import org.apache.accumulo.core.client.AccumuloException;
+import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.sensoriclife.Logger;
+import org.sensoriclife.db.Accumulo;
 import org.sensoriclife.storm.bolts.AccumuloBolt;
 import org.sensoriclife.storm.bolts.ElectricityBolt;
 import org.sensoriclife.storm.bolts.WorldBolt;
@@ -50,6 +53,14 @@ public class App {
 
 		if ( !debug ) {
 			try {
+				Accumulo.getInstance();
+				Accumulo.getInstance().connect("", "", "", "");
+			}
+			catch ( AccumuloException | AccumuloSecurityException e ) {
+				Logger.error("Error wihle connection to accumulo.", e.toString());
+			}
+
+			try {
 				conf.setNumWorkers(3);
 				StormSubmitter.submitTopology(name, conf, builder.createTopology());
 			}
@@ -58,6 +69,9 @@ public class App {
 			}
 		}
 		else {
+			Accumulo.getInstance();
+			Accumulo.getInstance().connect();
+
 			LocalCluster cluster = new LocalCluster();
 			cluster.submitTopology("test", conf, builder.createTopology());
 			Utils.sleep(10000);
