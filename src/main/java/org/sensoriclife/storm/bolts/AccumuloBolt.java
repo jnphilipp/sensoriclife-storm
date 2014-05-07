@@ -5,14 +5,17 @@ import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.base.BaseRichBolt;
 import backtype.storm.tuple.Tuple;
+import java.text.SimpleDateFormat;
 import java.util.Map;
-import org.apache.accumulo.core.client.BatchWriterConfig;
-import org.apache.accumulo.core.client.Instance;
-import org.apache.accumulo.core.client.mock.MockInstance;
-import org.apache.accumulo.core.data.Mutation;
+import org.apache.accumulo.core.client.MutationsRejectedException;
+import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.data.Value;
-import org.apache.accumulo.core.security.ColumnVisibility;
+import org.apache.hadoop.io.Text;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import org.sensoriclife.Logger;
+import org.sensoriclife.db.Accumulo;
 
 /**
  *
@@ -32,28 +35,36 @@ public class AccumuloBolt extends BaseRichBolt {
 
 	@Override
 	public void execute(Tuple input) {
-		Logger.info(AccumuloBolt.class, "AccumuloBolt got tuple: ", input.toString());
+		Logger.debug(AccumuloBolt.class, "AccumuloBolt got tuple: ", input.toString());
 
-		String instanceName = "sensoriclife";
-		//String zooServers = "zooserver-one,zooserver-two";
-		//Instance inst = new ZooKeeperInstance(instanceName, zooServers);
-		Instance instance = new MockInstance();
-		//Connector conn = inst.getConnector("user", new PasswordToken("passwd"));
+		if ( input.contains("cleaned_electricity") ) {
+			try {
+				JSONObject data = (JSONObject)new JSONParser().parse(input.getStringByField("cleaned_electricity"));
+				
+				Text rowID = new Text(data.get("id").toString());
+				Text colFam = new Text("electricity");
+				Text colQual = new Text("qual" + data.get("id").toString());
 
-		String rowID = "row1";
-		String data = input.getStringByField("cleaned_electricity");
-		ColumnVisibility colVis = new ColumnVisibility("public");
-		long timestamp = System.currentTimeMillis();
+				SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd-hh:mm:ss-z");
+				long timestamp = 0;
+				try {
+					timestamp = sdf.parse(data.get("timestamp").toString()).getTime();
+				}
+				catch ( java.text.ParseException e ) {
+					Logger.error(AccumuloBolt.class, "Error while parsing time.", e.toString());
+				}
 
-		Value value = new Value("myValue".getBytes());
-
-		Mutation mutation = new Mutation(rowID);
-		mutation.put(data, (CharSequence)colVis, timestamp, value);
-		BatchWriterConfig config = new BatchWriterConfig();
-		config.setMaxMemory(10000000L);
-
-		/*BatchWriter writer = conn.createBatchWriter("table", config);
-		writer.add(mutation);
-		writer.close();*/
+				Value value = new Value(data.get("value").toString().getBytes());
+				try {
+					Accumulo.getInstance().write("electricity_consumption", rowID, colFam, colQual, timestamp, value);
+				}
+				catch ( TableNotFoundException | MutationsRejectedException e ) {
+					Logger.error(AccumuloBolt.class, "Error while writing to accumulo.", e.toString());
+				}
+			}
+			catch ( ParseException e ) {
+				Logger.error(AccumuloBolt.class, "Error while parsing JSON.", e.toString());
+			}
+		}
 	}
 }

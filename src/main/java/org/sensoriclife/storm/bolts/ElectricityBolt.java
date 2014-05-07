@@ -7,6 +7,8 @@ import backtype.storm.topology.base.BaseRichBolt;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Map;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -53,10 +55,20 @@ public class ElectricityBolt extends BaseRichBolt {
 		String time = obj.get("time").toString();
 		String id = obj.get("id").toString();
 
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss z");
+		SimpleDateFormat out = new SimpleDateFormat("yyyy-MM-dd-hh:mm:ss-z");
+		try {
+			Date date = sdf.parse(time);
+			time =out.format(date);
+		}
+		catch ( java.text.ParseException e ) {
+			Logger.error(ElectricityBolt.class, "Error while parsing time.", e.toString());
+		}
+
 		JSONObject converted = new JSONObject();
-		converted.put("electricity_id", id);
+		converted.put("id", id);
 		converted.put("timestamp", time);
-		converted.put("counter_value", value);
+		converted.put("value", value);
 		return converted;
 	}
 }
