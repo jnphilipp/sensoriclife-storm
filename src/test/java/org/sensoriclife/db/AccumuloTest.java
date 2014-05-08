@@ -39,7 +39,7 @@ public class AccumuloTest {
 			value = new Value("5".getBytes());
 			accumulo.write("electricity_consumption", "4", "electricity", "", value);
 
-			Iterator<Entry<Key, Value>> entries = accumulo.scannByKey("electricity_consumption", "public", new Range("2", "3"));
+			Iterator<Entry<Key, Value>> entries = accumulo.scanByKey("electricity_consumption", "public", new Range("2", "3"));
 			int i = 0;
 			while ( entries.hasNext() ) {
 				Entry<Key, Value> entry = entries.next();

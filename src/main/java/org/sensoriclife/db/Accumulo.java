@@ -48,6 +48,15 @@ public class Accumulo {
 		return accumolo;
 	}
 
+	public synchronized Scanner getScannder(String table) throws TableNotFoundException {
+		return this.getScannder(table, "public");
+	}
+
+	public synchronized Scanner getScannder(String table, String visibility) throws TableNotFoundException {
+		Authorizations auths = new Authorizations(visibility);
+		return this.connector.createScanner(table, auths);
+	}
+
 	public void connect() throws AccumuloException, AccumuloSecurityException {
 		this.instance = new MockInstance();
 		this.connector = this.instance.getConnector("",  new PasswordToken(""));
@@ -67,11 +76,22 @@ public class Accumulo {
 		this.connector.tableOperations().create(table);
 	}
 
-	public synchronized Iterator<Entry<Key,Value>> scannByKey(String table, Range range) throws TableNotFoundException {
-		return this.scannByKey(table, "public", range);
+	public synchronized Iterator<Entry<Key,Value>> scanAll(String table) throws TableNotFoundException {
+		return this.scanAll(table, "public");
 	}
 
-	public synchronized Iterator<Entry<Key,Value>> scannByKey(String table, String visibility, Range range) throws TableNotFoundException {
+	public synchronized Iterator<Entry<Key,Value>> scanAll(String table, String visibility) throws TableNotFoundException {
+		Authorizations auths = new Authorizations(visibility);
+		Scanner scan = this.connector.createScanner(table, auths);
+
+		return scan.iterator();
+	}
+
+	public synchronized Iterator<Entry<Key,Value>> scanByKey(String table, Range range) throws TableNotFoundException {
+		return this.scanByKey(table, "public", range);
+	}
+
+	public synchronized Iterator<Entry<Key,Value>> scanByKey(String table, String visibility, Range range) throws TableNotFoundException {
 		Authorizations auths = new Authorizations(visibility);
 
 		Scanner scan = this.connector.createScanner(table, auths);
@@ -80,16 +100,42 @@ public class Accumulo {
 		return scan.iterator();
 	}
 
+	public synchronized void write(String table, byte[] rowId, byte[] columnFamily, byte[] columnQualifier, byte[] values) throws MutationsRejectedException, TableNotFoundException {
+		this.write(table, rowId, columnFamily, columnQualifier, "public", System.currentTimeMillis(), values);
+	}
+
 	public synchronized void write(String table, String rowId, String columnFamily, String columnQualifier, Value values) throws MutationsRejectedException, TableNotFoundException {
 		this.write(table, rowId, columnFamily, columnQualifier, "public", System.currentTimeMillis(), values);
+	}
+
+	public synchronized void write(String table, byte[] rowId, byte[] columnFamily, byte[] columnQualifier, byte[] values, String visibility) throws MutationsRejectedException, TableNotFoundException {
+		this.write(table, rowId, columnFamily, columnQualifier, visibility, System.currentTimeMillis(), values);
 	}
 
 	public synchronized void write(String table, String rowId, String columnFamily, String columnQualifier, Value values, String visibility) throws MutationsRejectedException, TableNotFoundException {
 		this.write(table, rowId, columnFamily, columnQualifier, visibility, System.currentTimeMillis(), values);
 	}
 
+	public synchronized void write(String table, byte[] rowId, byte[] columnFamily, byte[] columnQualifier, long timestamp, byte[] values) throws MutationsRejectedException, TableNotFoundException {
+		this.write(table, rowId, columnFamily, columnQualifier, "public", timestamp, values);
+	}
+
 	public synchronized void write(String table, String rowId, String columnFamily, String columnQualifier, long timestamp, Value values) throws MutationsRejectedException, TableNotFoundException {
 		this.write(table, rowId, columnFamily, columnQualifier, "public", timestamp, values);
+	}
+
+	public synchronized void write(String table, byte[] rowId, byte[] columnFamily, byte[] columnQualifier, String visibility, long timestamp, byte[] value) throws MutationsRejectedException, TableNotFoundException {
+		ColumnVisibility colVis = new ColumnVisibility("public");
+
+		BatchWriterConfig config = new BatchWriterConfig();
+		config.setMaxMemory(10000000L);
+		BatchWriter writer = this.connector.createBatchWriter(table, config);
+
+		Mutation mutation = new Mutation(rowId);
+		mutation.put(columnFamily, columnQualifier, colVis, timestamp, value);
+		writer.addMutation(mutation);
+
+		writer.close();
 	}
 
 	public synchronized void write(String table, String rowId, String columnFamily, String columnQualifier, String visibility, long timestamp, Value value) throws MutationsRejectedException, TableNotFoundException {
