@@ -1,0 +1,7 @@
+storm.debug=FALSE
+storm.name=NAME
+
+accumulo.name=NAME
+accumulo.zooservers=ZOO SERVERS
+accumulo.user=USER
+accumulo.password=PASSWORD
