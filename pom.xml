@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>org</groupId>
-	<artifactId>sensoriclife-storm</artifactId>
-	<version>0.1.1</version>
+	<groupId>sensoriclife</groupId>
+	<artifactId>storm</artifactId>
+	<version>0.1.2</version>
 	<packaging>jar</packaging>
 
 	<name>storm</name>
@@ -14,6 +14,14 @@
 		<maven.compiler.target>1.7</maven.compiler.target>
 	</properties>
 
+	<distributionManagement>
+		<repository>
+			<id>Ringvorlesung</id>
+			<name>Ringvorlesung-releases</name>
+			<url>http://78.47.243.227:8081/artifactory/libs-release-local</url>
+		</repository>
+	</distributionManagement>
+
 	<repositories>
 		<repository>
 			<id>clojars.org</id>
@@ -22,6 +30,11 @@
 	</repositories>
 
 	<dependencies>
+		<dependency>
+			<groupId>sensoriclife</groupId>
+			<artifactId>lib</artifactId>
+			<version>0.1.1</version>
+		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
@@ -78,8 +91,8 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>2.5.1</version>
 				<configuration>
-					<source>1.7</source>
-					<target>1.7</target>
+					<source>${maven.compiler.source}</source>
+					<target>${maven.compiler.target}</target>
 				</configuration>
 			</plugin>
 			<plugin>
@@ -94,8 +107,8 @@
 				<artifactId>maven-assembly-plugin</artifactId>
 				<version>2.4</version>
 				<configuration>
-					<source>1.7</source>
-					<target>1.7</target>
+					<source>${maven.compiler.source}</source>
+					<target>${maven.compiler.target}</target>
 					<descriptorRefs>
 						<descriptorRef>jar-with-dependencies</descriptorRef>
 					</descriptorRefs>
