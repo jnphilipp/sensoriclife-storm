@@ -17,7 +17,7 @@ import org.junit.Test;
 /**
  *
  * @author jnphilipp
- * @version 0.0.1
+ * @version 0.0.2
  */
 public class AccumuloTest {
 	@Test
@@ -47,6 +47,42 @@ public class AccumuloTest {
 			}
 
 			assertEquals(i, 2);
+		}
+		catch ( AccumuloException | AccumuloSecurityException e ) {
+			fail("Couldn't connect to accumulo: " + e.toString());
+		}
+		catch ( TableNotFoundException | TableExistsException e ) {
+			fail("Error: " + e.toString());
+		}
+	}
+
+	@Test
+	public void testAccumuloVersionLimit() {
+		try {
+			Accumulo accumulo = Accumulo.getInstance();
+			accumulo.connect();
+			accumulo.createTable("electricity_consumption", false);
+			
+			Value value = new Value("0".getBytes());
+			accumulo.write("electricity_consumption", "1", "electricity", "", 1, value);
+
+			value = new Value("1".getBytes());
+			accumulo.write("electricity_consumption", "1", "electricity", "", 2, value);
+
+			value = new Value("5".getBytes());
+			accumulo.write("electricity_consumption", "1", "electricity", "", 3, value);
+
+			value = new Value("5".getBytes());
+			accumulo.write("electricity_consumption", "1", "electricity", "", 4, value);
+
+			Iterator<Entry<Key, Value>> entries = accumulo.scanAll("electricity_consumption", "public");
+			int i = 0;
+			while ( entries.hasNext() ) {
+				Entry<Key, Value> entry = entries.next();
+				i++;
+			}
+
+			assertEquals(i, 4);
 		}
 		catch ( AccumuloException | AccumuloSecurityException e ) {
 			fail("Couldn't connect to accumulo: " + e.toString());

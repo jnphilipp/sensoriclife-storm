@@ -26,7 +26,7 @@ import org.apache.accumulo.core.security.ColumnVisibility;
 /**
  *
  * @author jnphilipp
- * @version 0.0.2
+ * @version 0.0.3
  */
 public class Accumulo {
 	/**
@@ -74,6 +74,10 @@ public class Accumulo {
 
 	public void createTable(String table) throws AccumuloException, AccumuloSecurityException, TableExistsException {
 		this.connector.tableOperations().create(table);
+	}
+
+	public void createTable(String table, boolean limitVersion) throws AccumuloException, AccumuloSecurityException, TableExistsException {
+		this.connector.tableOperations().create(table, limitVersion);
 	}
 
 	public synchronized Iterator<Entry<Key,Value>> scanAll(String table) throws TableNotFoundException {
