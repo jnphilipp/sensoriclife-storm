@@ -14,18 +14,15 @@
 		<maven.compiler.target>1.7</maven.compiler.target>
 	</properties>
 
-	<distributionManagement>
-		<repository>
-			<id>Ringvorlesung</id>
-			<name>Ringvorlesung-releases</name>
-			<url>http://78.47.243.227:8081/artifactory/libs-release-local</url>
-		</repository>
-	</distributionManagement>
-
 	<repositories>
 		<repository>
 			<id>clojars.org</id>
 			<url>http://clojars.org/repo</url>
+		</repository>
+		<repository>
+			<id>Ringvorlesung</id>
+			<name>Ringvorlesung-releases</name>
+			<url>http://78.47.243.227:8081/artifactory/libs-release-local</url>
 		</repository>
 	</repositories>
 
@@ -33,7 +30,7 @@
 		<dependency>
 			<groupId>sensoriclife</groupId>
 			<artifactId>lib</artifactId>
-			<version>0.1.1</version>
+			<version>0.1.2</version>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
