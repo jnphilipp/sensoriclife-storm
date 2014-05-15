@@ -4,17 +4,11 @@ import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.base.BaseRichBolt;
+import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
-import java.security.NoSuchAlgorithmException;
+import backtype.storm.tuple.Values;
+import java.util.List;
 import java.util.Map;
-import org.apache.accumulo.core.client.MutationsRejectedException;
-import org.apache.accumulo.core.client.TableNotFoundException;
-import org.apache.accumulo.core.data.Value;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.sensoriclife.Logger;
-import org.sensoriclife.db.Accumulo;
-import org.sensoriclife.util.Helpers;
 
 /**
  *
@@ -22,10 +16,13 @@ import org.sensoriclife.util.Helpers;
  * @version 0.0.1
  */
 public class WorldBolt extends BaseRichBolt {
+	private static long count = 0;
 	private OutputCollector collector;
 
 	@Override
-	public void declareOutputFields(OutputFieldsDeclarer declarer) {}
+	public void declareOutputFields(OutputFieldsDeclarer declarer) {
+		declarer.declare(new Fields("rowid", "family", "qualifier", "timestamp", "value"));
+	}
 
 	@Override
 	public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
@@ -34,44 +31,15 @@ public class WorldBolt extends BaseRichBolt {
 
 	@Override
 	public void execute(Tuple input) {
-		if ( input.contains("user") ) {
-			String name = input.getStringByField("user");
-			String billingAddress = input.getStringByField("billing_address");
-			String otherAddresses = input.getStringByField("other_addresses");
+		//declarer.declare(new Fields("user", "billing_address", "other_addresses", "electricity_id", "water_id", "heating_id"));
+		String user = input.getStringByField("user");
+		String billing = input.getStringByField("billing_address");
+		List<String> other = (List<String>)input.getValueByField("other_addresses");
+		int electricity = input.getIntegerByField("electricity_id");
+		int hotwater = input.getIntegerByField("hotwater_id");
+		int coldwater = input.getIntegerByField("coldwater_id");
+		int[] heatings = (int[])input.getValueByField("heating_id");
 
-			try {
-				JSONObject user = new JSONObject();
-				JSONArray ja = new JSONArray();
-				for ( String s : otherAddresses.split(";") )
-					ja.add(new JSONObject().put("address", s));
-				user.put("name", name);
-				user.put("billing_address", billingAddress);
-				user.put("otherAddresses", ja);
-
-				Value value = new Value(user.toJSONString().getBytes());
-				Accumulo.getInstance().write("users", Helpers.getSHA512(name + "#" + billingAddress), "user", null, value);
-			}
-			catch ( NoSuchAlgorithmException e ) {
-				Logger.error(WorldBolt.class, e.toString());
-			}
-			catch ( TableNotFoundException | MutationsRejectedException e ) {
-				Logger.error(WorldBolt.class, "Error while writing to accumulo.", e.toString());
-			}
-		}
-		else if ( input.contains("electricity_id") ) {
-			String electricityId = input.getStringByField("electricity_id");
-			String address = input.getStringByField("address");
-
-			try {
-				JSONObject unit = new JSONObject();
-				unit.put("electricity_id", electricityId);
-
-				Value value = new Value(unit.toJSONString().getBytes());
-				Accumulo.getInstance().write("residentialUnit", address, "residentialUnit", null, value);
-			}
-			catch ( TableNotFoundException | MutationsRejectedException e ) {
-				Logger.error(WorldBolt.class, "Error while writing to accumulo.", e.toString());
-			}
-		}
+		this.collector.emit(input, new Values(electricity + "_el", "residential", "id", System.currentTimeMillis(), billing));
 	}
 }

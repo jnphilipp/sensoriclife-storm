@@ -10,18 +10,16 @@ import backtype.storm.tuple.Values;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
+import java.util.TimeZone;
 import org.sensoriclife.Logger;
+import org.sensoriclife.util.Helpers;
 
 /**
  *
  * @author jnphilipp
  * @version 0.0.1
  */
-public class ElectricityBolt extends BaseRichBolt {
+public class HeatingBolt extends BaseRichBolt {
 	private OutputCollector collector;
 
 	@Override
@@ -36,36 +34,24 @@ public class ElectricityBolt extends BaseRichBolt {
 
 	@Override
 	public void execute(Tuple input) {
-		try {
-			Object electricity = new JSONParser().parse(input.getStringByField("electricity"));
-			if ( electricity instanceof JSONObject )
-				this.collector.emit(input, this.convertJSON((JSONObject)electricity));
-			else if ( electricity instanceof JSONArray )
-				for ( Object obj : ((JSONArray)electricity).toArray() )
-					this.collector.emit(input, this.convertJSON((JSONObject)obj));
-			this.collector.ack(input);
-		}
-		catch ( ParseException e ) {
-			Logger.error(ElectricityBolt.class, "Error while parsing JSON.", e.toString());
-		}
-	}
+		String heating = input.getStringByField("heating");
 
-	private Values convertJSON(JSONObject obj) {
-		String value = obj.get("value").toString();
-		String time = obj.get("time").toString();
-		String id = obj.get("id").toString();
+		String id = Helpers.get_tag_content_first("id", heating);
+		String value = Helpers.get_tag_content_first("meter", heating);
 
 		long timestamp = 0;
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss z");
+		sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
 		try {
-			Date date = sdf.parse(time);
+			Date date = sdf.parse(Helpers.get_tag_content_first("time", heating));
 			timestamp = date.getTime();
 		}
 		catch ( java.text.ParseException e ) {
 			Logger.error(ElectricityBolt.class, "Error while parsing time.", e.toString());
 		}
 
-		Values values = new Values(id + "_el", "device", "amount", timestamp, value);
-		return values;
+		Values values = new Values(id + "_he", "device", "amount", timestamp, value);
+		this.collector.emit(input, values);
+		this.collector.ack(input);
 	}
 }
