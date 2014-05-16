@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>sensoriclife</groupId>
 	<artifactId>storm</artifactId>
-	<version>0.2.1</version>
+	<version>0.2.2</version>
 	<packaging>jar</packaging>
 
 	<name>storm</name>
@@ -30,7 +30,7 @@
 		<dependency>
 			<groupId>sensoriclife</groupId>
 			<artifactId>lib</artifactId>
-			<version>0.2.0</version>
+			<version>0.2.1</version>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
