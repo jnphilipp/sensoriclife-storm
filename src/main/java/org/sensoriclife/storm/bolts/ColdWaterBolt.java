@@ -29,8 +29,8 @@ public class ColdWaterBolt extends BaseRichBolt {
 
 	@Override
 	public void execute(Tuple input) {
-		int id = input.getIntegerByField("id");
-		String value = String.valueOf(input.getFloatByField("value"));
+		int id = input.getIntegerByField("coldwater_id");
+		String value = String.valueOf(input.getFloatByField("coldWaterMeter"));
 		long timestamp = input.getLongByField("time");
 
 		Values values = new Values(id + "_wc", "device", "amount", timestamp, value);

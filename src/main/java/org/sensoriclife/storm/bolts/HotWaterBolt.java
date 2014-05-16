@@ -29,8 +29,8 @@ public class HotWaterBolt extends BaseRichBolt {
 
 	@Override
 	public void execute(Tuple input) {
-		int id = input.getIntegerByField("id");
-		String value = String.valueOf(input.getFloatByField("value"));
+		int id = input.getIntegerByField("hotwater_id");
+		String value = String.valueOf(input.getFloatByField("hotWaterMeter"));
 		long timestamp = input.getLongByField("time");
 
 		Values values = new Values(id + "_wh", "device", "amount", timestamp, value);
