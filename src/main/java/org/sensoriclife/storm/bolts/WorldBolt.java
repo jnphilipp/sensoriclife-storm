@@ -21,7 +21,7 @@ import org.sensoriclife.util.Helpers;
 /**
  *
  * @author jnphilipp
- * @version 0.0.1
+ * @version 0.0.2
  */
 public class WorldBolt extends BaseRichBolt {
 	private static long count = 0;
@@ -62,6 +62,8 @@ public class WorldBolt extends BaseRichBolt {
 
 	@Override
 	public void execute(Tuple input) {
+		Logger.debug(WorldBolt.class, "Reciving data:", input.toString());
+
 		String user = input.getStringByField("user");
 		String billing = input.getStringByField("billing_address");
 		List<String> others = (List<String>)input.getValueByField("other_addresses");

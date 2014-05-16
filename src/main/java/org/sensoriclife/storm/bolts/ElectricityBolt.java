@@ -19,7 +19,7 @@ import org.sensoriclife.Logger;
 /**
  *
  * @author jnphilipp
- * @version 0.0.1
+ * @version 0.0.2
  */
 public class ElectricityBolt extends BaseRichBolt {
 	private OutputCollector collector;
@@ -36,6 +36,8 @@ public class ElectricityBolt extends BaseRichBolt {
 
 	@Override
 	public void execute(Tuple input) {
+		Logger.debug(ElectricityBolt.class, "Reciving data:", input.toString());
+
 		try {
 			Object electricity = new JSONParser().parse(input.getStringByField("electricity"));
 			if ( electricity instanceof JSONObject )

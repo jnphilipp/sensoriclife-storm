@@ -8,11 +8,12 @@ import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
 import java.util.Map;
+import org.sensoriclife.Logger;
 
 /**
  *
  * @author jnphilipp
- * @version 0.1.0
+ * @version 0.1.1
  */
 public class HotWaterBolt extends BaseRichBolt {
 	private OutputCollector collector;
@@ -29,6 +30,8 @@ public class HotWaterBolt extends BaseRichBolt {
 
 	@Override
 	public void execute(Tuple input) {
+		Logger.debug(HotWaterBolt.class, "Reciving data:", input.toString());
+
 		int id = input.getIntegerByField("hotwater_id");
 		String value = String.valueOf(input.getFloatByField("hotWaterMeter"));
 		long timestamp = input.getLongByField("time");

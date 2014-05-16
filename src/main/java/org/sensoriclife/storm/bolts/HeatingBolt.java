@@ -17,7 +17,7 @@ import org.sensoriclife.util.Helpers;
 /**
  *
  * @author jnphilipp
- * @version 0.0.1
+ * @version 0.0.2
  */
 public class HeatingBolt extends BaseRichBolt {
 	private OutputCollector collector;
@@ -34,6 +34,8 @@ public class HeatingBolt extends BaseRichBolt {
 
 	@Override
 	public void execute(Tuple input) {
+		Logger.debug(HeatingBolt.class, "Reciving data:", input.toString());
+
 		String heating = input.getStringByField("heating");
 
 		String id = Helpers.get_tag_content_first("id", heating);
