@@ -9,7 +9,6 @@ import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
 import java.io.IOException;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import org.apache.accumulo.core.client.TableNotFoundException;
@@ -24,7 +23,7 @@ import org.sensoriclife.util.Helpers;
 /**
  *
  * @author jnphilipp
- * @version 0.0.3
+ * @version 0.0.4
  */
 public class WorldBolt extends BaseRichBolt {
 	private static long count = 0;
@@ -63,7 +62,7 @@ public class WorldBolt extends BaseRichBolt {
 		Logger.debug(WorldBolt.class, "Reciving data:", input.toString());
 
 		String user = input.getStringByField("user");
-		List<String> others = (List<String>)input.getValueByField("other_addresses");
+		String others = input.getStringByField("other_addresses");
 		long electricity = input.getLongByField("electricity_id");
 		long hotwater = input.getLongByField("hotwater_id");
 		long coldwater = input.getLongByField("coldwater_id");
@@ -103,7 +102,7 @@ public class WorldBolt extends BaseRichBolt {
 			}
 		}
 
-		byte[] all = (input.getStringByField("billing_address") + (others.isEmpty() ? "" : ";" + Helpers.join(others, ";"))).getBytes();
+		byte[] all = (input.getStringByField("billing_address") + (others == null || others.isEmpty() ? "" : ";" + others)).getBytes();
 
 		this.collector.emit(input, new Values(electricity + "_el", "user", "residential", System.currentTimeMillis(), all));
 		this.collector.emit(input, new Values(hotwater + "_wh", "user", "residential", System.currentTimeMillis(), all));

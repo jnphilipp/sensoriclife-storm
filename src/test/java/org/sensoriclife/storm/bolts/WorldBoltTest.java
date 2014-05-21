@@ -31,6 +31,7 @@ import org.apache.accumulo.core.data.Value;
 import org.junit.Test;
 import org.sensoriclife.Logger;
 import org.sensoriclife.db.Accumulo;
+import org.sensoriclife.util.Helpers;
 
 /**
  *
@@ -78,7 +79,7 @@ public class WorldBoltTest implements Serializable {
 				for ( int i = 0; i < heating_ids.length; i++ )
 					heating_ids[i] = this.random.nextLong();
 
-				this.collector.emit(new Values(name, address, other, electricity_id, hotwater_id,coldwater_id, heating_ids));
+				this.collector.emit(new Values(name, address, Helpers.join(other, ";"), electricity_id, hotwater_id,coldwater_id, heating_ids));
 			}
 
 			created = true;
