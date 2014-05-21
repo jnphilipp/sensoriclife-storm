@@ -81,7 +81,7 @@ public class WorldBolt extends BaseRichBolt {
 		this.collector.emit(input, new Values(coldwater + "_wc", "residential", "id", System.currentTimeMillis(), billing));
 
 		for ( long heating : heatings )
-			this.collector.emit(input, new Values(coldwater + "_he", "residential", "id", System.currentTimeMillis(), billing));
+			this.collector.emit(input, new Values(heating + "_he", "residential", "id", System.currentTimeMillis(), billing));
 
 		if ( !user.isEmpty() ) {
 			try {
@@ -95,7 +95,7 @@ public class WorldBolt extends BaseRichBolt {
 				this.collector.emit(input, new Values(coldwater + "_wc", "user", "id", System.currentTimeMillis(), value));
 
 				for ( long heating : heatings )
-					this.collector.emit(input, new Values(coldwater + "_he", "user", "id", System.currentTimeMillis(), value));
+					this.collector.emit(input, new Values(heating + "_he", "user", "id", System.currentTimeMillis(), value));
 			}
 			catch ( IOException e ) {
 				Logger.error(WorldBolt.class, e.toString());
@@ -109,7 +109,7 @@ public class WorldBolt extends BaseRichBolt {
 		this.collector.emit(input, new Values(coldwater + "_wc", "user", "residential", System.currentTimeMillis(), all));
 
 		for ( long heating : heatings )
-			this.collector.emit(input, new Values(coldwater + "_he", "user", "residential", System.currentTimeMillis(), all));
+			this.collector.emit(input, new Values(heating + "_he", "user", "residential", System.currentTimeMillis(), all));
 
 		this.collector.ack(input);
 	}

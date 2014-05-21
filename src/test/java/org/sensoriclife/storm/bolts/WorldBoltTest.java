@@ -109,6 +109,8 @@ public class WorldBoltTest implements Serializable {
 		cluster.killTopology("test");
 		cluster.shutdown();
 
+		Accumulo.getInstance().closeBashWriter("sensoriclife");
+
 		Iterator<Entry<Key, Value>> entries = Accumulo.getInstance().scanAll("sensoriclife");
 		int i = 0;
 		for ( ; entries.hasNext(); ++i ) {entries.next();}
@@ -129,18 +131,18 @@ public class WorldBoltTest implements Serializable {
 		new WorldBolt();
 		assertEquals(WorldBolt.getCount(), 0);
 
-		Accumulo.getInstance().write("sensoriclife", "1_el", "user", "id", "1");
-		Accumulo.getInstance().write("sensoriclife", "0_wh", "user", "id", "1");
-		Accumulo.getInstance().write("sensoriclife", "0_wc", "user", "id", "1");
-		Accumulo.getInstance().write("sensoriclife", "1_wc", "user", "id", "2");
+		Accumulo.getInstance().addMutation("sensoriclife", "1_el", "user", "id", "1".getBytes());
+		Accumulo.getInstance().addMutation("sensoriclife", "0_wh", "user", "id", "1".getBytes());
+		Accumulo.getInstance().addMutation("sensoriclife", "0_wc", "user", "id", "1".getBytes());
+		Accumulo.getInstance().addMutation("sensoriclife", "1_wc", "user", "id", "2".getBytes());
 
 		new WorldBolt();
 		assertEquals(3, WorldBolt.getCount());
 
-		Accumulo.getInstance().write("sensoriclife", "3_el", "user", "id", "3");
-		Accumulo.getInstance().write("sensoriclife", "2_wh", "user", "id", "5");
-		Accumulo.getInstance().write("sensoriclife", "2_wc", "user", "id", "1");
-		Accumulo.getInstance().write("sensoriclife", "6_wc", "user", "id", "6");
+		Accumulo.getInstance().addMutation("sensoriclife", "3_el", "user", "id", "3".getBytes());
+		Accumulo.getInstance().addMutation("sensoriclife", "2_wh", "user", "id", "5".getBytes());
+		Accumulo.getInstance().addMutation("sensoriclife", "2_wc", "user", "id", "1".getBytes());
+		Accumulo.getInstance().addMutation("sensoriclife", "6_wc", "user", "id", "6".getBytes());
 
 		new WorldBolt();
 		assertEquals(7, WorldBolt.getCount());

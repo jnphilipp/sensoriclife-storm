@@ -96,6 +96,8 @@ public class WaterBoltTest implements Serializable {
 		cluster.killTopology("test");
 		cluster.shutdown();
 
+		Accumulo.getInstance().closeBashWriter("sensoriclife");
+
 		Iterator<Map.Entry<Key, Value>> entries = Accumulo.getInstance().scanAll("sensoriclife");
 		int i = 0;
 		for ( ; entries.hasNext(); ++i ) {entries.next();}

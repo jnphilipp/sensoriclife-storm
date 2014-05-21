@@ -49,7 +49,7 @@ public class AccumuloBolt extends BaseRichBolt {
 		}
 
 		try {
-			Accumulo.getInstance().write(Config.getProperty("accumulo.table_name"), rowid, family, qualifier, timestamp, value);
+			Accumulo.getInstance().addMutation(Config.getProperty("accumulo.table_name"), rowid, family, qualifier, timestamp, value);
 		}
 		catch ( MutationsRejectedException | TableNotFoundException e ) {
 			Logger.error(AccumuloBolt.class, "Error while writing to accumulo.", e.toString());

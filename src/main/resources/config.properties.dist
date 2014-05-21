@@ -6,3 +6,4 @@ accumulo.zooservers=ZOO SERVERS
 accumulo.user=USER
 accumulo.password=PASSWORD
 accumulo.table_name=TABLE NAME
+accumulo.batch_writer.max_memory=10000000
