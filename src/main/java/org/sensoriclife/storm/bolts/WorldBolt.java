@@ -7,6 +7,7 @@ import backtype.storm.topology.base.BaseRichBolt;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
+import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -14,6 +15,8 @@ import java.util.Map.Entry;
 import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
+import org.apache.commons.lang.ArrayUtils;
+import org.sensoriclife.Config;
 import org.sensoriclife.Logger;
 import org.sensoriclife.db.Accumulo;
 import org.sensoriclife.util.Helpers;
@@ -21,29 +24,24 @@ import org.sensoriclife.util.Helpers;
 /**
  *
  * @author jnphilipp
- * @version 0.0.2
+ * @version 0.0.3
  */
 public class WorldBolt extends BaseRichBolt {
 	private static long count = 0;
 	private OutputCollector collector;
 
-	public WorldBolt() {
-		try {
-			Iterator<Entry<Key,Value>> iterator = Accumulo.getInstance().scanColumns("sensoriclife", "user", "id");
+	public WorldBolt() throws TableNotFoundException {
+		Iterator<Entry<Key,Value>> iterator = Accumulo.getInstance().scanColumns(Config.getProperty("accumulo.table_name"), "user", "id");
 
-			long tmp = 0;
-			while ( iterator.hasNext() ) {
-				Entry<Key, Value> entry = iterator.next();
-				if ( Long.valueOf(entry.getValue().toString()) > tmp )
-					tmp = Long.valueOf(entry.getValue().toString());
-			}
+		long tmp = 0;
+		while ( iterator.hasNext() ) {
+			Entry<Key, Value> entry = iterator.next();
+			if ( Long.valueOf(entry.getValue().toString()) > tmp )
+				tmp = Long.valueOf(entry.getValue().toString());
+		}
 
-			if ( count < tmp )
-				count = tmp + 1;
-		}
-		catch ( TableNotFoundException e ) {
-			Logger.error(WorldBolt.class, "Error while loading number of users.", e.toString());
-		}
+		if ( count < tmp )
+			count = tmp + 1;
 	}
 
 	public static long getCount() {
@@ -65,36 +63,53 @@ public class WorldBolt extends BaseRichBolt {
 		Logger.debug(WorldBolt.class, "Reciving data:", input.toString());
 
 		String user = input.getStringByField("user");
-		String billing = input.getStringByField("billing_address");
 		List<String> others = (List<String>)input.getValueByField("other_addresses");
-		int electricity = input.getIntegerByField("electricity_id");
-		int hotwater = input.getIntegerByField("hotwater_id");
-		int coldwater = input.getIntegerByField("coldwater_id");
-		int[] heatings = (int[])input.getValueByField("heating_ids");
+		long electricity = input.getLongByField("electricity_id");
+		long hotwater = input.getLongByField("hotwater_id");
+		long coldwater = input.getLongByField("coldwater_id");
+		long[] heatings = (long[])input.getValueByField("heating_ids");
+		byte[] billing = null;
+
+		try {
+			billing = Helpers.toByteArray(input.getStringByField("billing_address"));
+		}
+		catch ( IOException e ) {
+			Logger.error(WorldBolt.class, e.toString());
+		}
 
 		this.collector.emit(input, new Values(electricity + "_el", "residential", "id", System.currentTimeMillis(), billing));
 		this.collector.emit(input, new Values(hotwater + "_wh", "residential", "id", System.currentTimeMillis(), billing));
 		this.collector.emit(input, new Values(coldwater + "_wc", "residential", "id", System.currentTimeMillis(), billing));
 
-		for ( int heating : heatings )
+		for ( long heating : heatings )
 			this.collector.emit(input, new Values(coldwater + "_he", "residential", "id", System.currentTimeMillis(), billing));
 
 		if ( !user.isEmpty() ) {
-			this.collector.emit(input, new Values(electricity + "_el", "user", "id", System.currentTimeMillis(), count + ";" + user));
-			this.collector.emit(input, new Values(hotwater + "_wh", "user", "id", System.currentTimeMillis(), count + ";" + user));
-			this.collector.emit(input, new Values(coldwater + "_wc", "user", "id", System.currentTimeMillis(), count + ";" + user));
+			try {
+				byte[] c = Helpers.toByteArray(count);
+				byte[] u = Helpers.toByteArray(user);
 
-			for ( int heating : heatings )
-				this.collector.emit(input, new Values(coldwater + "_he", "user", "id", System.currentTimeMillis(), count + ";" + user));
+				byte[] value = ArrayUtils.addAll(c, u);
+
+				this.collector.emit(input, new Values(electricity + "_el", "user", "id", System.currentTimeMillis(), value));
+				this.collector.emit(input, new Values(hotwater + "_wh", "user", "id", System.currentTimeMillis(), value));
+				this.collector.emit(input, new Values(coldwater + "_wc", "user", "id", System.currentTimeMillis(), value));
+
+				for ( long heating : heatings )
+					this.collector.emit(input, new Values(coldwater + "_he", "user", "id", System.currentTimeMillis(), value));
+			}
+			catch ( IOException e ) {
+				Logger.error(WorldBolt.class, e.toString());
+			}
 		}
 
-		String all = billing + (others.isEmpty() ? "" : ";" + Helpers.join(others, ";"));
+		byte[] all = (input.getStringByField("billing_address") + (others.isEmpty() ? "" : ";" + Helpers.join(others, ";"))).getBytes();
 
 		this.collector.emit(input, new Values(electricity + "_el", "user", "residential", System.currentTimeMillis(), all));
 		this.collector.emit(input, new Values(hotwater + "_wh", "user", "residential", System.currentTimeMillis(), all));
 		this.collector.emit(input, new Values(coldwater + "_wc", "user", "residential", System.currentTimeMillis(), all));
 
-		for ( int heating : heatings )
+		for ( long heating : heatings )
 			this.collector.emit(input, new Values(coldwater + "_he", "user", "residential", System.currentTimeMillis(), all));
 
 		this.collector.ack(input);

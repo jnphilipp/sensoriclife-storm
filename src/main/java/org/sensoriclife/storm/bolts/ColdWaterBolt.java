@@ -7,13 +7,15 @@ import backtype.storm.topology.base.BaseRichBolt;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
+import java.io.IOException;
 import java.util.Map;
 import org.sensoriclife.Logger;
+import org.sensoriclife.util.Helpers;
 
 /**
  *
  * @author jnphilipp
- * @version 0.1.1
+ * @version 0.1.2
  */
 public class ColdWaterBolt extends BaseRichBolt {
 	private OutputCollector collector;
@@ -32,9 +34,16 @@ public class ColdWaterBolt extends BaseRichBolt {
 	public void execute(Tuple input) {
 		Logger.debug(ColdWaterBolt.class, "Reciving data:", input.toString());
 
-		int id = input.getIntegerByField("coldwater_id");
-		String value = String.valueOf(input.getFloatByField("coldWaterMeter"));
+		long id = input.getLongByField("coldwater_id");
 		long timestamp = input.getLongByField("time");
+		byte[] value = null;
+
+		try {
+			value = Helpers.toByteArray(input.getFloatByField("coldWaterMeter"));
+		}
+		catch ( IOException e ) {
+			Logger.error(ColdWaterBolt.class, e.toString());
+		}
 
 		Values values = new Values(id + "_wc", "device", "amount", timestamp, value);
 		this.collector.emit(input, values);

@@ -7,6 +7,7 @@ import backtype.storm.topology.base.BaseRichBolt;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map;
@@ -15,11 +16,12 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.sensoriclife.Logger;
+import org.sensoriclife.util.Helpers;
 
 /**
  *
  * @author jnphilipp
- * @version 0.0.2
+ * @version 0.0.3
  */
 public class ElectricityBolt extends BaseRichBolt {
 	private OutputCollector collector;
@@ -53,7 +55,7 @@ public class ElectricityBolt extends BaseRichBolt {
 	}
 
 	private Values convertJSON(JSONObject obj) {
-		String value = obj.get("value").toString();
+		String v = obj.get("value").toString();
 		String time = obj.get("time").toString();
 		String id = obj.get("id").toString();
 
@@ -65,6 +67,14 @@ public class ElectricityBolt extends BaseRichBolt {
 		}
 		catch ( java.text.ParseException e ) {
 			Logger.error(ElectricityBolt.class, "Error while parsing time.", e.toString());
+		}
+
+		byte[] value = null;
+		try {
+			value = Helpers.toByteArray(Float.parseFloat(v));
+		}
+		catch ( IOException e ) {
+			Logger.error(ElectricityBolt.class, e.toString());
 		}
 
 		Values values = new Values(id + "_el", "device", "amount", timestamp, value);

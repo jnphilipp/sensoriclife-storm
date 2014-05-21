@@ -5,3 +5,4 @@ accumulo.name=NAME
 accumulo.zooservers=ZOO SERVERS
 accumulo.user=USER
 accumulo.password=PASSWORD
+accumulo.table_name=TABLE NAME

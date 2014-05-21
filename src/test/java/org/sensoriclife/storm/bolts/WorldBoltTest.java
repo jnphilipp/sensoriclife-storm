@@ -2,6 +2,7 @@ package org.sensoriclife.storm.bolts;
 
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import backtype.storm.Config;
 import backtype.storm.LocalCluster;
@@ -15,14 +16,18 @@ import backtype.storm.tuple.Values;
 import backtype.storm.utils.Utils;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Random;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.MutationsRejectedException;
 import org.apache.accumulo.core.client.TableExistsException;
 import org.apache.accumulo.core.client.TableNotFoundException;
+import org.apache.accumulo.core.data.Key;
+import org.apache.accumulo.core.data.Value;
 import org.junit.Test;
 import org.sensoriclife.Logger;
 import org.sensoriclife.db.Accumulo;
@@ -33,6 +38,8 @@ import org.sensoriclife.db.Accumulo;
  * @version 0.0.1
  */
 public class WorldBoltTest implements Serializable {
+	private static boolean created = false;
+
 	private class TestSpout extends BaseRichSpout {
 		private SpoutOutputCollector collector;
 		private Random random;
@@ -53,99 +60,89 @@ public class WorldBoltTest implements Serializable {
 
 		@Override
 		public void nextTuple() {
-			String name = String.valueOf(this.random.nextLong());
-			String address = String.valueOf(this.random.nextLong());
-			List<String> other = new ArrayList<>();
-			int electricity_id = this.random.nextInt();
-			int hotwater_id = this.random.nextInt();
-			int coldwater_id = this.random.nextInt();
-			int[] heating_ids = new int[this.random.nextInt(5)];
+			if ( created )
+				return;
 
-			for ( int i = 0; i < this.random.nextInt(5); i++ )
-				other.add(String.valueOf(this.random.nextLong()));
+			for ( int j = 0; j < 10; j++ ) {
+				String name = String.valueOf(this.random.nextLong());
+				String address = String.valueOf(this.random.nextLong());
+				List<String> other = new ArrayList<>();
+				long electricity_id = this.random.nextLong();
+				long hotwater_id = this.random.nextLong();
+				long coldwater_id = this.random.nextLong();
+				long[] heating_ids = new long[this.random.nextInt(5)];
 
-			for ( int i = 0; i < heating_ids.length; i++ )
-				heating_ids[i] = this.random.nextInt();
+				for ( int i = 0; i < this.random.nextInt(5); i++ )
+					other.add(String.valueOf(this.random.nextLong()));
 
-			this.collector.emit(new Values(name, address, other, electricity_id, hotwater_id,coldwater_id, heating_ids));
+				for ( int i = 0; i < heating_ids.length; i++ )
+					heating_ids[i] = this.random.nextLong();
+
+				this.collector.emit(new Values(name, address, other, electricity_id, hotwater_id,coldwater_id, heating_ids));
+			}
+
+			created = true;
 		}
 	}
 
-	/**
-	 * Test WorldBolt.
-	 */
 	@Test
-	public void testWorldBolt() {
+	public void testWorldBolt() throws AccumuloException, AccumuloSecurityException, TableExistsException, TableNotFoundException {
 		Logger.getInstance();
+		org.sensoriclife.Config.getInstance().getProperties().setProperty("accumulo.table_name", "sensoriclife");
 
-		try {
-			Accumulo.getInstance();
-			Accumulo.getInstance().connect();
-			Accumulo.getInstance().createTable("users", false);
-			Accumulo.getInstance().createTable("residentialUnit", false);
-			Accumulo.getInstance().createTable("sensoriclife", false);
-		}
-		catch ( AccumuloException | AccumuloSecurityException e ) {
-			Logger.error(WorldBoltTest.class, "Error while connecting to accumulo.", e.toString());
-		}
-		catch ( TableExistsException e ) {
-			Logger.error(WorldBoltTest.class, "Error while creating table.", e.toString());
-		}
+		Accumulo.getInstance();
+		Accumulo.getInstance().connect();
+		Accumulo.getInstance().createTable("sensoriclife", false);
 
 		TopologyBuilder builder = new TopologyBuilder();
-		builder.setSpout("world_generator", new TestSpout());
-		builder.setBolt("world", new WorldBolt(), 1).shuffleGrouping("world_generator");
+		builder.setSpout("worldgenerator", new TestSpout(), 1);
+		builder.setBolt("worldbolt", new WorldBolt(), 1).shuffleGrouping("worldgenerator");
+		builder.setBolt("accumulobolt", new AccumuloBolt(), 1).shuffleGrouping("worldbolt");
 
 		Config conf = new Config();
 		conf.setDebug(true);
 
 		LocalCluster cluster = new LocalCluster();
 		cluster.submitTopology("test", conf, builder.createTopology());
-		Utils.sleep(10000);
+		Utils.sleep(30000);
 		cluster.killTopology("test");
 		cluster.shutdown();
+
+		Iterator<Entry<Key, Value>> entries = Accumulo.getInstance().scanAll("sensoriclife");
+		int i = 0;
+		for ( ; entries.hasNext(); ++i ) {entries.next();}
+		assertTrue(i > 0);
+
+		Accumulo.getInstance().deleteTable("sensoriclife");
 	}
 
 	@Test
-	public void testConstructor() {
+	public void testConstructor() throws AccumuloException, AccumuloSecurityException, TableExistsException, MutationsRejectedException, TableNotFoundException {
 		Logger.getInstance();
+		org.sensoriclife.Config.getInstance().getProperties().setProperty("accumulo.table_name", "sensoriclife");
+
+		Accumulo.getInstance();
+		Accumulo.getInstance().connect();
+		Accumulo.getInstance().createTable("sensoriclife", false);
 
 		new WorldBolt();
 		assertEquals(WorldBolt.getCount(), 0);
 
-		try {
-			Accumulo.getInstance();
-			Accumulo.getInstance().connect();
-			Accumulo.getInstance().createTable("sensoriclife", false);
-			Accumulo.getInstance().write("sensoriclife", "1_el", "user", "id", "1");
-			Accumulo.getInstance().write("sensoriclife", "0_wh", "user", "id", "1");
-			Accumulo.getInstance().write("sensoriclife", "0_wc", "user", "id", "1");
-			Accumulo.getInstance().write("sensoriclife", "1_wc", "user", "id", "2");
-		}
-		catch ( AccumuloException | AccumuloSecurityException e ) {
-			Logger.error(WorldBoltTest.class, "Error while connecting to accumulo.", e.toString());
-		}
-		catch ( TableExistsException e ) {
-			Logger.error(WorldBoltTest.class, "Error while creating table.", e.toString());
-		}
-		catch ( TableNotFoundException e ) {
-			Logger.error(WorldBoltTest.class, "Error while writing mutations.", e.toString());
-		}
+		Accumulo.getInstance().write("sensoriclife", "1_el", "user", "id", "1");
+		Accumulo.getInstance().write("sensoriclife", "0_wh", "user", "id", "1");
+		Accumulo.getInstance().write("sensoriclife", "0_wc", "user", "id", "1");
+		Accumulo.getInstance().write("sensoriclife", "1_wc", "user", "id", "2");
 
 		new WorldBolt();
 		assertEquals(3, WorldBolt.getCount());
 
-		try {
-			Accumulo.getInstance().write("sensoriclife", "3_el", "user", "id", "3");
-			Accumulo.getInstance().write("sensoriclife", "2_wh", "user", "id", "5");
-			Accumulo.getInstance().write("sensoriclife", "2_wc", "user", "id", "1");
-			Accumulo.getInstance().write("sensoriclife", "6_wc", "user", "id", "6");
-		}
-		catch ( MutationsRejectedException | TableNotFoundException e ) {
-			Logger.error(WorldBoltTest.class, "Error while writing mutations.", e.toString());
-		}
+		Accumulo.getInstance().write("sensoriclife", "3_el", "user", "id", "3");
+		Accumulo.getInstance().write("sensoriclife", "2_wh", "user", "id", "5");
+		Accumulo.getInstance().write("sensoriclife", "2_wc", "user", "id", "1");
+		Accumulo.getInstance().write("sensoriclife", "6_wc", "user", "id", "6");
 
 		new WorldBolt();
 		assertEquals(7, WorldBolt.getCount());
+		Accumulo.getInstance().deleteTable("sensoriclife");
 	}
 }
