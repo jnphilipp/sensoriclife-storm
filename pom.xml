@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>sensoriclife</groupId>
 	<artifactId>storm</artifactId>
-	<version>0.3.3</version>
+	<version>0.3.4</version>
 	<packaging>jar</packaging>
 
 	<name>storm</name>
@@ -30,7 +30,7 @@
 		<dependency>
 			<groupId>sensoriclife</groupId>
 			<artifactId>lib</artifactId>
-			<version>0.6.0</version>
+			<version>1.0.0</version>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
@@ -47,6 +47,12 @@
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-log4j12</artifactId>
 			<version>1.7.7</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.zookeeper</groupId>
+			<artifactId>zookeeper</artifactId>
+			<version>3.3.6</version>
+			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>storm</groupId>
