@@ -23,14 +23,22 @@ import org.sensoriclife.util.Helpers;
 /**
  *
  * @author jnphilipp
- * @version 0.0.4
+ * @version 0.1.0
  */
 public class WorldBolt extends BaseRichBolt {
 	private static long count = 0;
 	private OutputCollector collector;
 
 	public WorldBolt() throws TableNotFoundException {
-		Iterator<Entry<Key,Value>> iterator = Accumulo.getInstance().scanColumns(Config.getProperty("accumulo.table_name"), "user", "id");
+		this.init(Accumulo.getInstance(), Config.getProperty("accumulo.table_name"));
+	}
+
+	public WorldBolt(Accumulo accumulo, String table) throws TableNotFoundException {
+		this.init(accumulo, table);
+	}
+
+	private void init(Accumulo accumulo, String table) throws TableNotFoundException {
+		Iterator<Entry<Key,Value>> iterator = accumulo.scanColumns(table, "user", "id");
 
 		long tmp = 0;
 		while ( iterator.hasNext() ) {
