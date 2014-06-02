@@ -8,6 +8,8 @@ import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Map;
 import org.sensoriclife.Logger;
 import org.sensoriclife.util.Helpers;
@@ -15,7 +17,7 @@ import org.sensoriclife.util.Helpers;
 /**
  *
  * @author jnphilipp
- * @version 0.1.2
+ * @version 0.1.3
  */
 public class HotWaterBolt extends BaseRichBolt {
 	private OutputCollector collector;
@@ -35,8 +37,17 @@ public class HotWaterBolt extends BaseRichBolt {
 		Logger.debug(HotWaterBolt.class, "Reciving data:", input.toString());
 
 		long id = input.getLongByField("hotwater_id");
-		long timestamp = input.getLongByField("time");
 		byte[] value = null;
+
+		long timestamp = 0;
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss z");
+		try {
+			Date date = sdf.parse(input.getStringByField("time"));
+			timestamp = date.getTime();
+		}
+		catch ( java.text.ParseException e ) {
+			Logger.error(ElectricityBolt.class, "Error while parsing time.", e.toString());
+		}
 
 		try {
 			value = Helpers.toByteArray(input.getFloatByField("hotWaterMeter"));
