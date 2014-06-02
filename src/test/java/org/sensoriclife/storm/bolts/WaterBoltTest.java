@@ -13,9 +13,12 @@ import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Values;
 import backtype.storm.utils.Utils;
 import java.io.Serializable;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Random;
+import java.util.TimeZone;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.TableExistsException;
@@ -29,7 +32,7 @@ import org.sensoriclife.db.Accumulo;
 /**
  *
  * @author jnphilipp
- * @version 0.0.1
+ * @version 0.0.2
  */
 public class WaterBoltTest implements Serializable {
 	private class TestWaterSpout extends BaseRichSpout {
@@ -53,14 +56,16 @@ public class WaterBoltTest implements Serializable {
 
 		@Override
 		public void nextTuple() {
+			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss z");
+			sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+
 			long hotWaterId = this.random.nextLong();
 			float hotWaterMeter = this.random.nextFloat();
-			long timestamp = System.currentTimeMillis();
+			String timestamp = sdf.format(new Date(System.currentTimeMillis()));
 			this.collector.emit("hotwater", new Values(hotWaterId, hotWaterMeter, timestamp));
 
 			long coldWaterId = this.random.nextLong();
 			float coldWaterMeter = this.random.nextFloat();
-			timestamp = System.currentTimeMillis();
 			this.collector.emit("hotwater", new Values(hotWaterId, hotWaterMeter, timestamp));
 
 			try {
