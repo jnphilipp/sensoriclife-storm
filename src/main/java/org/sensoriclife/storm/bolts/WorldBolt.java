@@ -23,7 +23,7 @@ import org.sensoriclife.util.Helpers;
 /**
  *
  * @author jnphilipp
- * @version 0.1.0
+ * @version 0.1.1
  */
 public class WorldBolt extends BaseRichBolt {
 	private static long count = 0;
@@ -108,16 +108,22 @@ public class WorldBolt extends BaseRichBolt {
 			catch ( IOException e ) {
 				Logger.error(WorldBolt.class, e.toString());
 			}
+
+			byte[] all = null;
+			try {
+				all = Helpers.toByteArray(input.getStringByField("billing_address") + (others == null || others.isEmpty() ? "" : ";" + others));
+			}
+			catch ( IOException e ) {
+				Logger.error(WorldBolt.class, e.toString());
+			}
+
+			this.collector.emit(input, new Values(electricity + "_el", "user", "residential", System.currentTimeMillis(), all));
+			this.collector.emit(input, new Values(hotwater + "_wh", "user", "residential", System.currentTimeMillis(), all));
+			this.collector.emit(input, new Values(coldwater + "_wc", "user", "residential", System.currentTimeMillis(), all));
+
+			for ( long heating : heatings )
+				this.collector.emit(input, new Values(heating + "_he", "user", "residential", System.currentTimeMillis(), all));
 		}
-
-		byte[] all = (input.getStringByField("billing_address") + (others == null || others.isEmpty() ? "" : ";" + others)).getBytes();
-
-		this.collector.emit(input, new Values(electricity + "_el", "user", "residential", System.currentTimeMillis(), all));
-		this.collector.emit(input, new Values(hotwater + "_wh", "user", "residential", System.currentTimeMillis(), all));
-		this.collector.emit(input, new Values(coldwater + "_wc", "user", "residential", System.currentTimeMillis(), all));
-
-		for ( long heating : heatings )
-			this.collector.emit(input, new Values(heating + "_he", "user", "residential", System.currentTimeMillis(), all));
 
 		this.collector.ack(input);
 	}
