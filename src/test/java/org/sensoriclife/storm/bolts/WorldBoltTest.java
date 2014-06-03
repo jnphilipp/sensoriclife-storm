@@ -128,6 +128,7 @@ public class WorldBoltTest implements Serializable {
 		Accumulo.getInstance().connect();
 		Accumulo.getInstance().createTable("sensoriclife", false);
 
+		WorldBolt.setCount(0);
 		new WorldBolt();
 		assertEquals(WorldBolt.getCount(), 0);
 

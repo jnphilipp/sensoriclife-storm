@@ -47,12 +47,16 @@ public class WorldBolt extends BaseRichBolt {
 				tmp = Long.valueOf(entry.getValue().toString());
 		}
 
-		if ( count < tmp )
+		if ( tmp > 0 && count < tmp )
 			count = tmp + 1;
 	}
 
 	public static long getCount() {
 		return count;
+	}
+
+	public static void setCount(long count) {
+		WorldBolt.count = count;
 	}
 
 	@Override
