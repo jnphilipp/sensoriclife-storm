@@ -93,7 +93,7 @@ public class WorldBolt extends BaseRichBolt {
 
 		if ( !user.isEmpty() ) {
 			try {
-				byte[] c = Helpers.toByteArray(count);
+				byte[] c = Helpers.toByteArray(count++);
 				byte[] u = Helpers.toByteArray(user);
 
 				byte[] value = ArrayUtils.addAll(c, u);
